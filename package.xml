@@ -1,7 +1,10 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>newcastle_race</name>
+  <version>0.0.0</version>
   <description>newcastle_race</description>
+  <maintainer email="druhvkar@seas.upenn.edu">Dhruv Karthik</maintainer>
+  <license>MIT</license>
 
 
   <buildtool_depend>catkin</buildtool_depend>
@@ -26,6 +29,7 @@
   <exec_depend>rospy</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>std_msgs</exec_depend>
+
   <export>
 
 
