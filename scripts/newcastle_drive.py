@@ -39,42 +39,67 @@ class NewcastleDrive(object):
         self.scan_sub = rospy.Subscriber('/tyne_team/scan', LaserScan, self.scan_callback, queue_size=1)
         self.pose_sub = rospy.Subscriber('/tyne_team/odom', Odometry, self.pose_callback, queue_size=1)
         self.drive_pub = rospy.Publisher('/tyne_team/drive', AckermannDriveStamped, queue_size=1)
-       
+
 
     def select_velocity(self, angle):
         if abs(angle) <= 5 * math.pi / 180:
-            velocity = 4.5
+            velocity = 7.0
         elif abs(angle) <= 10 * math.pi / 180:
-            velocity = 4.0
+            velocity = 6.5
         elif abs(angle) <= 15 * math.pi / 180:
-            velocity = 4.0
+            velocity = 6.5
         elif abs(angle) <= 20 * math.pi / 180:
-            velocity = 4.0
+            velocity = 6.0
         else:
-            velocity = 3.0
+            velocity = 5.0
         return velocity
 
     def findangle(self, data):
         lid = []
-        maxindex = 0
+        maxindex = 540
         i = 0
         x = 0
         readingold = 0
+        gs = 0
+        lgs = 0
+        reading = 0
+        z = 0
+        while z < len(data.ranges):
+            if data.ranges[z] >= 3 and (z > 180) and (z < 900):
+                gs += 1
+                if gs > lgs:
+                    lgs = gs
+            else:
+                gs = 0
+
+            z += 1
+
         while i < len(data.ranges):
-            if (i <= 180) or (i >= 900):
-                x = 0
-                reading = 0
-            elif data.ranges[i] <= 5:
+            if (i <= 300) or (i >= 780):
                 x = 0
                 reading = 0
 
+            elif data.ranges[i] <= 3.5 and lgs > 80:
+                x = 0
+                reading = 0
+
+            elif data.ranges[i] <= 1.6:
+                x = 0
+                reading = 0
 
             else:
+                reading += data.ranges[i] - 0.005 * abs(540 - i)
                 x += 1
-                reading = reading + data.ranges[i] - 0.001 * abs(540 - i)
-                if x > 20 and reading > readingold:
-                    readingold = reading
-                    maxindex = i - x/2
+                if x > 10 and reading / x ** 0.3 > readingold:
+                    readingold = reading / x ** 0.3
+                    maxindex = i - x / 2
+
+                if lgs < 130 and maxindex > 540:
+                    maxindex += 40
+                if lgs < 130 and maxindex < 540:
+                    maxindex += -40
+
+                print(lgs, " ", maxindex, " ", x)
             i += 1
         # print(len(lid))
         return maxindex
