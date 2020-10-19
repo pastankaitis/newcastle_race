@@ -36,9 +36,9 @@ class NewcastleDrive(object):
 
         self.index = 0
 
-        self.scan_sub = rospy.Subscriber('/ego_id/scan', LaserScan, self.scan_callback, queue_size=1)
-        self.pose_sub = rospy.Subscriber('/ego_id/odom', Odometry, self.pose_callback, queue_size=1)
-        self.drive_pub = rospy.Publisher('/ego_id/drive', AckermannDriveStamped, queue_size=1)
+        self.scan_sub = rospy.Subscriber('/tyne_team/scan', LaserScan, self.scan_callback, queue_size=1)
+        self.pose_sub = rospy.Subscriber('/tyne_team/odom', Odometry, self.pose_callback, queue_size=1)
+        self.drive_pub = rospy.Publisher('/tyne_team/drive', AckermannDriveStamped, queue_size=1)
        
 
     def select_velocity(self, angle):
