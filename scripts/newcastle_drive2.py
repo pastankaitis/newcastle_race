@@ -4,6 +4,8 @@ from sensor_msgs.msg import Image, LaserScan
 from ackermann_msgs.msg import AckermannDriveStamped, AckermannDrive
 from nav_msgs.msg import Odometry
 
+
+
 import os
 import numpy as np
 import tf
@@ -15,14 +17,9 @@ kp = 1.115
 kd = 0.08
 ki = 0.0000015
 
-# kp = 0.42
-# kd = 0.01
-# ki = 0.0005
-
 
 L = 0.4
 
-# L = 1
 
 servo_offset = 0.0
 prev_error = 0.0
@@ -30,16 +27,15 @@ error = 0.0
 integral = 0.0
 
 
-class NewcastleDrive2(object):
+class NewcastleDrive(object):
 
     def __init__(self):
 
         self.index = 0
 
-        self.scan_sub = rospy.Subscriber('/opp_id/scan', LaserScan, self.scan_callback, queue_size=1)
-        self.pose_sub = rospy.Subscriber('/opp_id/odom', Odometry, self.pose_callback, queue_size=1)
-        self.drive_pub = rospy.Publisher('/opp_id/drive', AckermannDriveStamped, queue_size=1)
-       
+        self.scan_sub = rospy.Subscriber('/ego_id/scan', LaserScan, self.scan_callback, queue_size=1)
+        self.pose_sub = rospy.Subscriber('/ego_id/odom', Odometry, self.pose_callback, queue_size=1)
+        self.drive_pub = rospy.Publisher('/ego_id/drive', AckermannDriveStamped, queue_size=1)
 
     def select_velocity(self, angle):
         if abs(angle) <= 5 * math.pi / 180:
@@ -56,27 +52,51 @@ class NewcastleDrive2(object):
 
     def findangle(self, data):
         lid = []
-        maxindex = 0
+        maxindex = 540
         i = 0
         x = 0
         readingold = 0
+        gs = 0
+        lgs = 0
+        reading = 0
+        z = 0
+        while z < len(data.ranges):
+            if data.ranges[z] >= 3 and (z > 160) and (z < 920):
+                gs += 1
+                if gs > lgs:
+                    lgs = gs
+            else:
+                gs = 0
+
+            z += 1
+
         while i < len(data.ranges):
-            if (i <= 180) or (i >= 900):
-                x = 0
-                reading = 0
-            elif data.ranges[i] <= 5:
+            if (i <= 240) or (i >= 840):
                 x = 0
                 reading = 0
 
+            elif data.ranges[i] <= 3.5 and lgs > 60:
+                x = 0
+                reading = 0
+
+            elif data.ranges[i] <= 1.9:
+                x = 0
+                reading = 0
 
             else:
+                reading += data.ranges[i] - 0.005 * abs(540 - i)
                 x += 1
-                reading = reading + data.ranges[i] - 0.001 * abs(540 - i)
-                if x > 20 and reading > readingold:
-                    readingold = reading
-                    maxindex = i - x/2
+                if x > 10 and reading/x**0.25 > readingold:
+                    readingold = reading/x**0.25
+                    maxindex = i - x / 2
+
+                if lgs < 80 and maxindex > 542:
+                    maxindex += 40
+                if lgs < 80 and maxindex < 538:
+                    maxindex += -40
             i += 1
         # print(len(lid))
+        print(lgs)
         return maxindex
 
     def driver(self, angle, velocity):
@@ -122,9 +142,13 @@ class NewcastleDrive2(object):
         global ki
         global kd
 
-        # servo_offset = 0.4 * 1.0 / 2.0
+	servo_offset = 0.4 * 1.0 / 2.0
+	integral = integral + angle_to_dist * servo_offset * 0.001
 
-        pid_angle = -kp * angle_to_dist  # + ki * (integral + angle_to_dist * servo_offset) + kd * (angle_to_dist - prev_error) / servo_offset
+
+        
+
+        pid_angle = -kp * angle_to_dist  - ki * (integral)# + kd * (angle_to_dist - prev_error) / servo_offset
 
         # prev_error = angle_to_dist
 
@@ -133,26 +157,14 @@ class NewcastleDrive2(object):
         else:
             pid_angle /= 100
 
-        # print(angle_to_dist, pid_angle)
+    
 
-        # ---------------------------------------
-
-        # destination = [1, 0]
-
-        # compute angle to the WAYPOINT (destination)
-        # destination_to_point = math.sqrt((abs(self.position[0] - destination[0]) ** 2) + (abs(self.position[1] - destination[1]) ** 2))
-        # l2_0 = [destination[0] - self.position[0], destination[1] - self.position[1]]
-        # goaly_veh = -math.sin(self.euler[2]) * l2_0[0] + math.cos(self.euler[2]) * l2_0[1]
-        # arc = 2 * goaly_veh / (destination_to_point ** 2)
-        # angle = 0.3 * arc
-        # angle = np.clip(angle, -0.35, 0.35)
-        # ----------------------------------------------------------
 
         # get lidar data with self.data from scan_callback
         self.driver(pid_angle, self.select_velocity(pid_angle))
 
 
 if __name__ == '__main__':
-    rospy.init_node('newcastle_drive_node2')
-    nd = NewcastleDrive2()
+    rospy.init_node('newcastle_drive_node')
+    nd = NewcastleDrive()
     rospy.spin()
