@@ -45,11 +45,11 @@ class NewcastleDrive(object):
         elif abs(angle) <= 15 * math.pi / 180:
             velocity = 7.0
         elif abs(angle) <= 20 * math.pi / 180:
-            velocity = 7.0
+            velocity = 6.0
         else:
             velocity = 6.5
-        return velocity
-
+        return velocity  # 7.0 * (((180 * (math.pi / 180)) - abs(angle)) / (180 * (math.pi / 180)))
+    
     def findangle(self, data):
         lid = []
         maxindex = 540
@@ -59,43 +59,19 @@ class NewcastleDrive(object):
         gs = 0
         lgs = 0
         reading = 0
-        z = 0
-        while z < len(data.ranges):
-            if data.ranges[z] >= 3 and (z > 180) and (z < 900):
-                gs += 1
-                if gs > lgs:
-                    lgs = gs
-            else:
-                gs = 0
-
-            z += 1
-
         while i < len(data.ranges):
             if (i <= 300) or (i >= 780):
                 x = 0
                 reading = 0
-
-            elif data.ranges[i] <= 3.5 and lgs > 80:
+            elif data.ranges[i] <= 5.5:
                 x = 0
                 reading = 0
-
-            elif data.ranges[i] <= 1.6:
-                x = 0
-                reading = 0
-
             else:
                 reading += data.ranges[i] - 0.005 * abs(540 - i)
                 x += 1
-                if x > 10 and reading / x ** 0.3 > readingold:
-                    readingold = reading / x ** 0.3
+                if x > 10 and reading / x**0.3 > readingold:
+                    readingold = reading / x**0.3
                     maxindex = i - x / 2
-
-                if lgs < 130 and maxindex > 540:
-                    maxindex += 40
-                if lgs < 130 and maxindex < 540:
-                    maxindex += -40
-
-                print(lgs, " ", maxindex, " ", x)
             i += 1
         # print(len(lid))
         return maxindex
