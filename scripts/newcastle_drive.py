@@ -15,14 +15,10 @@ kp = 1.115
 kd = 0.08
 ki = 0.0000015
 
-# kp = 0.42
-# kd = 0.01
-# ki = 0.0005
-
 
 L = 0.4
 
-# L = 1
+
 
 servo_offset = 0.0
 prev_error = 0.0
@@ -129,10 +125,7 @@ class NewcastleDrive(object):
         self.euler = tf.transformations.euler_from_quaternion(quaternion)
         self.position = [pose_msg.pose.pose.position.x, pose_msg.pose.pose.position.y]
 
-        velocity = 0.0
-        angle = 0.0
-
-        # ---------------------------------- process lidar and find destination points
+       
 
         anglefound = self.findangle(self.lidar)
         angle_to_dist = (135 - anglefound / 4)
@@ -147,31 +140,15 @@ class NewcastleDrive(object):
         global ki
         global kd
 
-        # servo_offset = 0.4 * 1.0 / 2.0
+        
 
-        pid_angle = -kp * angle_to_dist  # + ki * (integral + angle_to_dist * servo_offset) + kd * (angle_to_dist - prev_error) / servo_offset
+        pid_angle = -kp * angle_to_dist  
 
-        # prev_error = angle_to_dist
-
+        
         if (angle_to_dist > 40) or (angle_to_dist < -40):
             pid_angle = np.clip(pid_angle, -0.4, 0.4)
         else:
             pid_angle /= 100
-
-        # print(angle_to_dist, pid_angle)
-
-        # ---------------------------------------
-
-        # destination = [1, 0]
-
-        # compute angle to the WAYPOINT (destination)
-        # destination_to_point = math.sqrt((abs(self.position[0] - destination[0]) ** 2) + (abs(self.position[1] - destination[1]) ** 2))
-        # l2_0 = [destination[0] - self.position[0], destination[1] - self.position[1]]
-        # goaly_veh = -math.sin(self.euler[2]) * l2_0[0] + math.cos(self.euler[2]) * l2_0[1]
-        # arc = 2 * goaly_veh / (destination_to_point ** 2)
-        # angle = 0.3 * arc
-        # angle = np.clip(angle, -0.35, 0.35)
-        # ----------------------------------------------------------
 
         # get lidar data with self.data from scan_callback
         self.driver(pid_angle, self.select_velocity(pid_angle))
