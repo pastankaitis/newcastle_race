@@ -130,10 +130,7 @@ class NewcastleDrive(object):
         anglefound = self.findangle(self.lidar)
         angle_to_dist = (135 - anglefound / 4)
 
-        # prev_angle = 0
-
-        # if (angle_to_dist)
-
+  
         global integral
         global prev_error
         global kp
