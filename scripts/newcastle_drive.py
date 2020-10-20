@@ -41,13 +41,13 @@ class NewcastleDrive(object):
         if abs(angle) <= 5 * math.pi / 180:
             velocity = 7.0
         elif abs(angle) <= 10 * math.pi / 180:
-            velocity = 6.5
+            velocity = 7.0
         elif abs(angle) <= 15 * math.pi / 180:
-            velocity = 6.5
+            velocity = 7.0
         elif abs(angle) <= 20 * math.pi / 180:
-            velocity = 6.0
+            velocity = 7.0
         else:
-            velocity = 5.0
+            velocity = 6.5
         return velocity
 
     def findangle(self, data):
